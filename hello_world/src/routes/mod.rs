@@ -11,6 +11,7 @@ mod read_middleware_custom_header;
 mod return_201;
 mod set_middleware_custom_header;
 mod get_json;
+mod validate_with_serde;
 use crate::routes::{
     mirror_body::mirror_body, mirror_body_json::mirror_body_json, path_variables::hard_coded_path,
 };
@@ -32,6 +33,7 @@ use return_201::return_201;
 use set_middleware_custom_header::set_middleware_custom_header;
 use tower_http::cors::{Any, CorsLayer};
 use get_json::get_json;
+use validate_with_serde::validate_with_serde;
 
 #[derive(Clone)]
 pub struct SharedData {
@@ -67,4 +69,5 @@ pub fn create_routes() -> Router {
         .route("/always_error", get(always_error))
         .route("/return_201", get(return_201))
         .route("/get_json", get(get_json))
+        .route("/validate_with_serde", post(validate_with_serde))
 }
