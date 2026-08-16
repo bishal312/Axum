@@ -8,7 +8,7 @@ use axum::{
 use crate::routes::read_middleware_custom_header::HeaderMessage;
 
 pub async fn set_middleware_custom_header(
-    mut request: Request<Body>,
+    request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
     // let headers = request.headers();
