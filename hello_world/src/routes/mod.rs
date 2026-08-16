@@ -8,6 +8,7 @@ mod path_variables;
 mod query_params;
 mod read_middleware_custom_header;
 mod set_middleware_custom_header;
+mod always_error;
 use crate::routes::{
     mirror_body::mirror_body, mirror_body_json::mirror_body_json, path_variables::hard_coded_path,
 };
@@ -26,6 +27,7 @@ use query_params::query_params;
 use read_middleware_custom_header::read_middleware_custom_header;
 use set_middleware_custom_header::set_middleware_custom_header;
 use tower_http::cors::{Any, CorsLayer};
+use always_error::always_error;
 
 #[derive(Clone)]
 pub struct SharedData {
@@ -58,4 +60,5 @@ pub fn create_routes() -> Router {
         .route("/middleware_message", get(middleware_message))
         .layer(Extension(shared_data))
         .layer(cors)
+        .route("/always_error", get(always_error))
 }
