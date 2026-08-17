@@ -1,0 +1,48 @@
+### Root
+GET http://localhost:8000/
+
+
+### Get all users
+GET http://localhost:8000/users
+
+
+### Create user
+POST http://localhost:8000/users
+Content-Type: application/json
+
+{
+  "name": "Bishal Dai",
+  "email": "bishaldai@example.com"
+}
+
+
+### Create another user
+POST http://localhost:8000/users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com"
+}
+
+
+### Get user by ID
+GET http://localhost:8000/users/1
+
+
+### Update user
+PUT http://localhost:8000/users/1
+Content-Type: application/json
+
+{
+  "name": "Bishal Kunwar",
+  "email": "bishal.kunwar@example.com"
+}
+
+
+### Delete user
+DELETE http://localhost:8000/users/1
+
+
+### Get all users after deletion
+GET http://localhost:8000/users
