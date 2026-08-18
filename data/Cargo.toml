@@ -1,0 +1,7 @@
+[package]
+name = "data"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sea-orm = { version = "2.0.2", features = ["runtime-tokio-rustls", "sqlx-postgres"] }
