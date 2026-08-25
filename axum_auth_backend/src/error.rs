@@ -17,3 +17,19 @@ impl fmt::Display for ErrorResponse {
         write!(f, "{}", serde_json::to_string(&self).unwrap())
     }
 }
+
+
+#[derive(Debug, PartialEq)]
+pub enum ErrorMessage {
+    EmptyPassword,
+    ExceededMaxPasswordLength(usize),
+    HashingError,
+    InvalidToken,
+    ServerError,
+    WrongCredentials,
+    EmailExist,
+    UserNoLongerExist,
+    TokenNotProvided,
+    PermissionDenied,
+    UserNotAuthenticated,
+}
