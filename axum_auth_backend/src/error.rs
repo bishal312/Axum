@@ -18,7 +18,6 @@ impl fmt::Display for ErrorResponse {
     }
 }
 
-
 #[derive(Debug, PartialEq)]
 pub enum ErrorMessage {
     EmptyPassword,
@@ -32,4 +31,30 @@ pub enum ErrorMessage {
     TokenNotProvided,
     PermissionDenied,
     UserNotAuthenticated,
+}
+
+impl ToString for ErrorMessage {
+    fn to_string(&self) -> String {
+        self.to_string().to_owned()
+    }
+}
+
+impl ErrorMessage {
+    fn to_string(&self) -> String {
+        match self {
+            ErrorMessage::EmptyPassword => "Password is required".to_owned(),
+            ErrorMessage::ExceededMaxPasswordLength(length) => {
+                format!("Password must be at most {length} characters")
+            }
+            ErrorMessage::HashingError => "Error occurred while hashing password".to_owned(),
+            ErrorMessage::InvalidToken => "Invalid token".to_owned(),
+            ErrorMessage::ServerError => "Internal server error".to_owned(),
+            ErrorMessage::WrongCredentials => "Wrong credentials".to_owned(),
+            ErrorMessage::EmailExist => "Email already exists".to_owned(),
+            ErrorMessage::UserNoLongerExist => "User no longer exists".to_owned(),
+            ErrorMessage::TokenNotProvided => "Token not provided".to_owned(),
+            ErrorMessage::PermissionDenied => "Permission denied".to_owned(),
+            ErrorMessage::UserNotAuthenticated => "User not authenticated".to_owned(),
+        }
+    }
 }
