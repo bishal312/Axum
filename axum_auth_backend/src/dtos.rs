@@ -50,9 +50,9 @@ pub struct FilterUserDto {
     pub role: String,
     pub verified: bool,
     #[serde(rename = "createdAt")]
-    pub created_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
     #[serde(rename = "updatedAt")]
-    pub update_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 impl FilterUserDto {
@@ -64,7 +64,7 @@ impl FilterUserDto {
             verified: user.verified,
             role: user.role.to_str().to_string(),
             created_at: user.created_at,
-            update_at: user.update_at,
+            updated_at: user.updated_at,
         }
     }
 

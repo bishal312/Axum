@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[sqlx(type_name = "user_role", rename_all = "lowercase")]
 pub enum UserRole {
     Admin,
-    User
+    User,
 }
 
 impl UserRole {
@@ -17,8 +17,8 @@ impl UserRole {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, sqlx::FromRow, sqlx::Type, Clone)]
-pub  struct User {
+#[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
+pub struct User {
     pub id: uuid::Uuid,
     pub name: String,
     pub email: String,
@@ -26,9 +26,10 @@ pub  struct User {
     pub role: UserRole,
     pub verified: bool,
     pub verification_token: Option<String>,
-    pub token_expires_at: Option<String>,
+    #[serde(rename = "tokenExpiresAt")]
+    pub token_expires_at: Option<DateTime<Utc>>,
     #[serde(rename = "createdAt")]
-    pub created_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
     #[serde(rename = "updatedAt")]
-    pub update_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
