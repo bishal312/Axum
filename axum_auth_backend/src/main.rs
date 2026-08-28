@@ -6,6 +6,7 @@ mod error;
 mod db;
 mod routes;
 mod utils;
+mod middleware;
 
 use axum::{Extension, Router, http::{HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}}};
 use config::Config;
