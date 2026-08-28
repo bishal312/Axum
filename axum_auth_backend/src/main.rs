@@ -5,6 +5,7 @@ mod dtos;
 mod error;
 mod db;
 mod routes;
+mod utils;
 
 use axum::{Extension, Router, http::{HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}}};
 use config::Config;
@@ -46,7 +47,7 @@ async fn main() {
     };
 
     let cors = CorsLayer::new()
-        .allow_origin("*".parse::<HeaderValue>().unwrap())
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
         .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE])
         .allow_credentials(true)
         .allow_methods([Method::GET, Method::POST, Method::PUT]);
@@ -71,4 +72,7 @@ async fn main() {
     .unwrap();
 
     axum::serve(listener, app).await.unwrap();
+
+
+
 }
