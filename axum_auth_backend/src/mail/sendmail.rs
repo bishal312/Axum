@@ -13,7 +13,7 @@ use lettre::{
 pub async fn send_email(
     to_email: &str,
     subject: &str,
-    templet_path: &str,
+    template_path: &str,
     placeholders: &[(String, String)],
 ) -> Result<(), Box<dyn std::error::Error>> {
     let smtp_username = env::var("SMTP_USERNAME")?;
@@ -21,10 +21,10 @@ pub async fn send_email(
     let smtp_server = env::var("SMTP_SERVER")?;
     let smtp_port: u16 = env::var("SMTP_PORT")?.parse()?;
 
-    let mut html_templet = fs::read_to_string(templet_path)?;
+    let mut html_template = fs::read_to_string(template_path)?;
 
     for (key, value) in placeholders {
-        html_templet = html_templet.replace(key, value)
+        html_template = html_template.replace(key, value)
     }
 
     let email = Message::builder()
@@ -34,7 +34,7 @@ pub async fn send_email(
         .header(header::ContentType::TEXT_HTML)
         .singlepart(SinglePart::builder()
             .header(header::ContentType::TEXT_HTML)
-            .body(html_templet)
+            .body(html_template)
     )?;
 
     let  creds = Credentials::new(smtp_username, smtp_password);
