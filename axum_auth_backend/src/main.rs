@@ -7,13 +7,13 @@ mod db;
 mod routes;
 mod utils;
 mod middleware;
+mod mail;
 
 use axum::{Extension, Router, http::{HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}}};
 use config::Config;
 use db::DBClient;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
-use tower::Layer;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::filter::LevelFilter;
 
