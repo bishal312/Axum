@@ -1,11 +1,10 @@
 use std::{result, sync::Arc};
 
 use axum::{Extension, Json, body, http::StatusCode, response::IntoResponse};
-use chrono::Utc;
-use time::Duration;
+use chrono::{Utc, Duration};
 use validator::Validate;
 
-use crate::{AppState, db::UserExt, dtos::RegisterUserDto, error::{ErrorMessage, HttpError}, mail::mails::send_verification_email, utils::password};
+use crate::{AppState, db::UserExt, dtos::{RegisterUserDto, Response}, error::{ErrorMessage, HttpError}, mail::mails::send_verification_email, utils::password};
 
 pub async fn register(
     Extension(app_state): Extension<Arc<AppState>>,
@@ -33,7 +32,7 @@ pub async fn register(
             }
 
             Ok((StatusCode::CREATED, Json(Response{
-                status: "success",
+                status: "success".to_string(),
                 message: "Registeration successfull! Please check your email to verify your account.".to_string(),
             })))
         },
