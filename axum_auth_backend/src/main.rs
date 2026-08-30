@@ -8,6 +8,7 @@ mod routes;
 mod utils;
 mod middleware;
 mod mail;
+mod handler;
 
 use axum::{Extension, Router, http::{HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}}};
 use config::Config;
