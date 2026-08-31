@@ -1,10 +1,11 @@
 use std::{result, sync::Arc};
 
-use axum::{Extension, Json, body, http::StatusCode, response::IntoResponse};
+use axum::{Extension, Json, body, http::{HeaderMap, StatusCode, header}, response::IntoResponse};
+use axum_extra::extract::cookie::Cookie;
 use chrono::{Utc, Duration};
 use validator::Validate;
 
-use crate::{AppState, db::UserExt, dtos::{RegisterUserDto, Response}, error::{ErrorMessage, HttpError}, mail::mails::send_verification_email, utils::password};
+use crate::{AppState, db::UserExt, dtos::{LoginUserDto, RegisterUserDto, Response, UserLoginResponseDto }, error::{ErrorMessage, HttpError}, mail::mails::send_verification_email, utils::{password, token}};
 
 pub async fn register(
     Extension(app_state): Extension<Arc<AppState>>,
@@ -96,3 +97,100 @@ pub async fn register(
 // Case C: Other Errors (Err(e))
 
 // Return a generic HttpError::server_error containing the error details.
+
+
+pub async fn login(
+    Extension(app_state): Extension<Arc<AppState>>,
+    Json(body): Json<LoginUserDto>,
+) -> Result<impl IntoResponse, HttpError> {
+    body.validate()
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+
+    let result = app_state.db_client
+        .get_user(None, None, Some(&body.email), None)
+        .await
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+
+    let user = result.ok_or(HttpError::bad_request((ErrorMessage::WrongCredentials.to_string())))?;
+
+    let password_matched = password::compare(&body.password, &user.password)
+        .map_err(|_| HttpError::bad_request(ErrorMessage::WrongCredentials.to_string()))?;
+
+    if password_matched {
+        let token = token::create_token(
+            &user.id.to_string(),
+            &app_state.env.jwt_secret.as_bytes(),
+            app_state.env.jwt_maxage,
+        )
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+
+        let cookie_duration = time::Duration::minutes(app_state.env.jwt_maxage * 60);
+        let cookie = Cookie::build(("token", token.clone()))
+            .path("/")
+            .max_age(cookie_duration)
+            .http_only(true)
+            .build();
+
+        let response = axum::response::Json(UserLoginResponseDto {
+            status: "success".to_string(),
+            token,
+        });
+
+        let mut header = HeaderMap::new();
+
+        header.append(
+            header::SET_COOKIE,
+            cookie.to_string().parse().unwrap(),
+        );
+
+        let mut response = response.into_response();
+        response.headers_mut().extend(header);
+
+        Ok(response)
+    } else {
+        Err(HttpError::bad_request(ErrorMessage::WrongCredentials.to_string()))
+    }
+}
+
+// Step 1: Input & Request Extraction
+
+// Receive the shared application state (app_state) and extract the JSON payload into LoginUserDto (body).
+
+// Step 2: Input Validation
+
+// Validate the incoming payload fields using body.validate().
+
+// If validation fails: Map the validation error to an HttpError::server_error and terminate execution. (Note: Typically validation errors return 400 Bad Request, but here it returns server error).
+
+// Step 3: User Lookup
+
+// Asynchronously query the database via app_state.db_client.get_user() using the provided email address (&body.email).
+
+// If the database query fails: Return an HttpError::server_error.
+
+// If no user matches the email: Convert the None result into an HttpError::bad_request with a generic "Wrong Credentials" message.
+
+// Step 4: Password Verification
+
+// Compare the provided plain-text password (&body.password) against the hashed password stored in the user record (&user.password).
+
+// If password comparison fails or errors out: Return an HttpError::bad_request with a "Wrong Credentials" message.
+
+// Step 5: Authentication Token & Cookie Generation
+
+// If the password matches:
+
+// Generate a JWT token using the user's ID (user.id), the secret key (app_state.env.jwt_secret), and the maximum age setting. If token creation fails, return an HttpError::server_error.
+
+// Calculate the cookie duration by converting jwt_maxage into minutes.
+
+// Construct an HTTP-only token cookie scoped to path "/".
+
+// Create a JSON response payload containing status: "success" and the generated JWT token.
+
+// Build a HTTP Set-Cookie header containing the cookie string.
+
+// Attach the Set-Cookie header to the response object and return Ok(response).
+
+// If the password does not match: Return an HttpError::bad_request with a "Wrong Credentials" message.
+

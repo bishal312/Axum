@@ -90,6 +90,12 @@ pub struct UserListResponseDto {
     pub token: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserLoginResponseDto {
+    pub status: String,
+    pub token: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
     pub status: String,
