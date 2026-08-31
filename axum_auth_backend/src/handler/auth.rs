@@ -5,7 +5,7 @@ use axum_extra::extract::cookie::Cookie;
 use chrono::{Utc, Duration};
 use validator::Validate;
 
-use crate::{AppState, db::UserExt, dtos::{ForgotPasswordRequestDto, LoginUserDto, RegisterUserDto, Response, UserLoginResponseDto, VerifyEmailQueryDto }, error::{ErrorMessage, HttpError}, mail::mails::{send_forget_email, send_verification_email, send_welcome_email}, utils::{password, token}};
+use crate::{AppState, db::UserExt, dtos::{ForgotPasswordRequestDto, LoginUserDto, RegisterUserDto, ResetPasswordRequestDto, Response, UserLoginResponseDto, VerifyEmailQueryDto }, error::{ErrorMessage, HttpError}, mail::mails::{send_forget_email, send_verification_email, send_welcome_email}, utils::{password, token}};
 
 pub async fn register(
     Extension(app_state): Extension<Arc<AppState>>,
@@ -335,7 +335,7 @@ pub async fn forget_password(
 
     let reset_link = format!("http://localhost:5173/reset-password?token={}", &verification_token);
 
-    let email_sent = send_forget_email(&user.email, reset_link, &user.name).await;
+    let email_sent = send_forget_email(&user.email, &reset_link, &user.name).await;
     
     if let Err(e) = email_sent {
         eprint!("Failded to send forget password email reset link: {}", e);
@@ -349,4 +349,47 @@ pub async fn forget_password(
 
     Ok(Json(response))
 
+}
+
+pub async fn reset_password(
+    Extension(app_state): Extension<Arc<AppState>>,
+    Json(body): Json<ResetPasswordRequestDto>,
+) -> Result<impl IntoResponse, HttpError> {
+    body.validate()
+        .map_err(|e| HttpError:: bad_request(e.to_string()))?;
+
+    let result = app_state.db_client
+        .get_user(None, None, None, Some(&body.token))
+        .await
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+
+    let user = result.ok_or(HttpError::bad_request("Invalid or expired token".to_string()))?;
+
+    if let Some(expires_at) = user.token_expires_at {
+        if Utc::now() > expires_at {
+            return Err(HttpError::bad_request("Verification token has been expired".to_string()))?;
+        }
+    }
+    
+    let user_id = uuid::Uuid::parse_str(&user.id.to_string()).unwrap();
+
+    let hash_password = password::hash(&body.new_password)
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+    
+    app_state.db_client
+        .update_user_password(user_id.clone(), hash_password)
+        .await
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+
+    app_state.db_client
+        .verified_token(&body.token)
+        .await
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+
+    let response = Response {
+        message: "Password has been successfully reset.".to_string(),
+        status: "success".to_string(),
+    };
+
+    Ok(Json(response))
 }
