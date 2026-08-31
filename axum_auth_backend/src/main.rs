@@ -10,6 +10,7 @@ mod middleware;
 mod mail;
 mod handler;
 
+use std::sync::Arc;
 use axum::{Extension, Router, http::{HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}}};
 use config::Config;
 use db::DBClient;
@@ -55,12 +56,13 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST, Method::PUT]);
 
     let db_client = DBClient::new(pool);
-    let app_state = AppState {
+    let app_state = Arc::new(AppState {
         env: config.clone(),
         db_client,
-    };
+    });
 
     let app = Router::new()
+        .nest("/auth", handler::auth::auth_handler())
         .layer(Extension(app_state))
         .layer(cors.clone());
 

@@ -113,6 +113,12 @@ impl HttpError {
     }
 }
 
+impl IntoResponse for HttpError {
+    fn into_response(self) -> Response {
+        self.into_http_response()
+    }
+}
+
 impl fmt::Display for HttpError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
