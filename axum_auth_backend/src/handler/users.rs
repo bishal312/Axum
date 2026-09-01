@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::{Extension, Json, extract::Query, response::IntoResponse};
 use validator::Validate;
 
-use crate::{AppState, db::UserExt, dtos::{FilterUserDto, RequestQueryDto, UserData, UserListResponseDto, UserResponseDto}, error::HttpError, middleware::JWTAUTHMiddleware};
+use crate::{AppState, db::UserExt, dtos::{FilterUserDto, NameUpdateDto, RequestQueryDto, UserData, UserListResponseDto, UserResponseDto}, error::HttpError, middleware::JWTAUTHMiddleware};
 
 
 
@@ -50,4 +50,32 @@ pub async fn get_users(
     };
 
     Ok(Json(response))
+}
+
+pub async fn update_user_name(
+    Extension(app_state): Extension<Arc<AppState>>,
+    Extension(user): Extension<JWTAUTHMiddleware>,
+    Json(body): Json<NameUpdateDto>,
+) -> Result<impl IntoResponse, HttpError> {
+    body.validate()
+        .map_err(|e| HttpError::bad_request(e.to_string()))?;
+
+    let user = &user.user;
+
+    let user_id = uuid::Uuid::parse_str(&user.id.to_string()).unwrap();
+    let result = app_state.db_client
+        .update_user_name(user_id.clone(), &body.name)
+        .await
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
+
+    let filtered_user = FilterUserDto::filter_user(&result);
+
+    let respones = UserResponseDto {
+        data: UserData {
+            user: filtered_user,
+        },
+        status: "success".to_string(),
+    };
+
+    Ok(Json(respones))
 }
