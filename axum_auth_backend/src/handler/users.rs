@@ -1,11 +1,30 @@
 use std::sync::Arc;
 
-use axum::{Extension, Json, extract::Query, response::IntoResponse};
+use axum::{Extension, Json, Router, extract::Query, middleware, response::IntoResponse, routing::{get, put}};
 use sqlx::encode::IsNull::No;
 use validator::Validate;
 
-use crate::{AppState, db::UserExt, dtos::{FilterUserDto, NameUpdateDto, RequestQueryDto, Response, RoleUpdateDto, UserData, UserListResponseDto, UserPasswordUpdateDto, UserResponseDto}, error::{ErrorMessage, HttpError}, middleware::JWTAUTHMiddleware, utils::password};
+use crate::{AppState, db::UserExt, dtos::{FilterUserDto, NameUpdateDto, RequestQueryDto, Response, RoleUpdateDto, UserData, UserListResponseDto, UserPasswordUpdateDto, UserResponseDto}, error::{ErrorMessage, HttpError}, middleware::{JWTAUTHMiddleware, role_check}, models::UserRole, utils::password};
 
+pub fn users_handler() -> Router {
+    Router::new()
+        .route(
+            "/me",
+            get(get_me)
+            .layer(middleware::from_fn(|state, req, next| {
+                role_check(state, req, next, vec![UserRole::Admin, UserRole::User])
+            }))
+        )
+        .route("/users",
+        get(get_users)
+        .layer(middleware::from_fn(|state, req, next| {
+                role_check(state, req, next, vec![UserRole::Admin])
+            }))
+    )
+    .route("/name", put(update_user_name))
+    .route("/role", put(update_user_role))
+    .route("/password", put(update_user_password))
+}
 
 
 pub async fn get_me(
@@ -129,7 +148,7 @@ pub async fn update_user_password(
     let user = result.ok_or(HttpError::unauthorized(ErrorMessage::InvalidToken.to_string()))?;
 
     let password_match = password::compare(&body.old_password, &user.password)
-        .map_err(|e| HttpError::bad_request(e.to_string()))?;
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
 
     if !password_match {
         return Err(HttpError::bad_request("Old password is incorrect".to_string()));
