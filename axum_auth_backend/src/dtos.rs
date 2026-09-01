@@ -109,7 +109,7 @@ pub struct NameUpdateDto {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Validate, Serialize, Deserialize)]
 pub struct RoleUpdateDto {
     pub role: UserRole,
 }
