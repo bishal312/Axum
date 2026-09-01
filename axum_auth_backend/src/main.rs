@@ -19,6 +19,8 @@ use sqlx::postgres::PgPoolOptions;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::filter::LevelFilter;
 
+use crate::routes::create_router;
+
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub env: Config,
@@ -56,15 +58,12 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST, Method::PUT]);
 
     let db_client = DBClient::new(pool);
-    let app_state = Arc::new(AppState {
+    let app_state = AppState {
         env: config.clone(),
         db_client,
-    });
+    };
 
-    let app = Router::new()
-        .nest("/auth", handler::auth::auth_handler())
-        .layer(Extension(app_state))
-        .layer(cors.clone());
+    let app = create_router(Arc::new(app_state.clone())).layer(cors.clone());
 
     println!(
         "{}",
